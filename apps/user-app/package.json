@@ -22,6 +22,7 @@
     "@repo/store": "*",
     "@repo/types": "*",
     "@repo/ui": "*",
+    "@sentry/nextjs": "^8",
     "@tabler/icons-react": "^3.12.0",
     "@tsparticles/engine": "^3.5.0",
     "@tsparticles/react": "^3.0.0",
