@@ -13,7 +13,7 @@ interface Props {
 const Landing: NextPage<Props> = ({}) => {
   return (
         <section id="hero">
-          <div className="relative h-full overflow-hidden py-5 md:py-14">
+          <div className="h-full py-5 md:py-14">
             <div className="z-10 flex flex-col">
               <div className="mt-10 grid grid-cols-1 md:mt-20">
                 <div className="flex flex-col items-start gap-6 px-7 pb-8 text-center md:items-center md:px-10">

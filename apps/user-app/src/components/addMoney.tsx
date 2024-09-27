@@ -44,7 +44,7 @@ export default function Addmoney() {
 
   
   return (
-    <Card className="w-full max-w-md">    
+    <Card className="w-full max-w-md ">    
       <CardHeader>
         <CardTitle className="text-xl font-semibold ">Bank account details</CardTitle>
         <CardDescription>Enter the bank account details </CardDescription>

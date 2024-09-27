@@ -9,7 +9,7 @@ export default async function Page() {
 
   return (
     <>
-    <BackgroundLines className="flex items-center justify-center w-full flex-col px-4">
+    <BackgroundLines className="min-h-screen flex items-center justify-center w-full ">
       <Landing />
     </BackgroundLines>
     </>

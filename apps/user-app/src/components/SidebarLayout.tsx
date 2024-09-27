@@ -104,7 +104,7 @@ export function  SidebarLayout({ children }: { children: React.ReactNode }) {
         </SidebarBody>
       </Sidebar>
       <div className="flex flex-1">
-      <div className="p-2 md:p-8 rounded-tl-2xl border border-neutral-200 dark:border-neutral-700 flex flex-col gap-2 flex-1 w-full h-full">
+      <div className="p-4 md:p-8 rounded-tl-2xl border border-neutral-200 dark:border-neutral-700 flex flex-col gap-2 flex-1 w-full h-full">
         {children}
       </div>
     </div>

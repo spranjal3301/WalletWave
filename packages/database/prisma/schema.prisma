@@ -57,6 +57,7 @@ model User {
   onRampTransactions OnRampTransaction[]
   sentTransfers     Transfer[]       @relation(name: "FromUserRelation")
   receivedTransfers Transfer[]       @relation(name: "ToUserRelation")
+  TransactionsHistory TransactionsHistory[]
 }
 
 model VerificationToken {
@@ -89,6 +90,18 @@ model Transfer {
   toUser     User         @relation(name: "ToUserRelation", fields: [toUserId], references: [id])
 }
 
+model TransactionsHistory {
+  id         Int      @id @default(autoincrement())
+  amount     Int
+  timestamp  DateTime @default(now())
+  status     OnRampStatus @default(Declined)
+  type       TransationType @default(Deposit)
+  toUserName String
+  toUserImage String?
+  userId     String 
+  user       User     @relation(fields: [userId], references: [id])
+}
+
 
 // amount 2 decimal 2020 => 20.20
 model Balance {
@@ -104,9 +117,14 @@ enum AuthType {
 }
 
 enum OnRampStatus {
-  Success
-  Failure
+  Success 
+  Declined
   Processing
+}
+
+enum TransationType {
+  Deposit
+  Withdraw
 }
 
 enum Usertype {

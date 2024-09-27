@@ -1,64 +1,90 @@
 'use client'
 
-import { useState } from 'react'
-import { Search, User } from 'lucide-react'
+import { useRef, useState } from 'react'
+import { Loader2, Search, User } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card'
 import { Input } from './ui/input'
 import { Button } from './ui/button'
 import { Avatar, AvatarFallback } from './ui/avatar'
+import Loader from './loader'
+import searchUser from '../app/api/actions/serachUser'
+import { useToast } from '../hooks/use-toast'
+import Image from 'next/image'
+import sendMoney from '../app/api/actions/sendMoney'
 
 
-// Mock function to simulate user search
-const searchUsers = async (query: string) => {
-  // Simulating API call delay
-  await new Promise(resolve => setTimeout(resolve, 500))
-  return [
-    { id: '1', name: 'Alice Johnson', email: 'alice@example.com' },
-    { id: '2', name: 'Bob Smith', email: 'bob@example.com' },
-    { id: '3', name: 'Charlie Brown', email: 'charlie@example.com' },
-  ].filter(user => user.name.toLowerCase().includes(query.toLowerCase()))
-}
 
-// Mock function to simulate sending money
-const sendMoney = async (userId: string, amount: number) => {
-  // Simulating API call delay
-  await new Promise(resolve => setTimeout(resolve, 1000))
-  return { success: true, message: `Successfully sent $${amount} to user ${userId}` }
-}
+
+
 
 type User = {
-  id: string
-  name: string
-  email: string
+  id: string;
+  name: string | null;
+  email: string | null;
+  image?: string | null;
+}
+
+interface TserachResult {
+  result: User[] 
+  error: boolean
+  message: string
 }
 
 export default function Transfer() {
-  const [searchQuery, setSearchQuery] = useState('')
-  const [searchResults, setSearchResults] = useState<User[]>([])
+  const [searchResults, setSearchResults] = useState<TserachResult>({result: [], error: false, message: ''})
   const [selectedUser, setSelectedUser] = useState<User | null>(null)
-  const [amount, setAmount] = useState('')
-  const [message, setMessage] = useState('')
+  const [loading,setLoading] = useState<boolean>(false)
+  const inputRef = useRef<any>(null);
+  const amountRef = useRef<any>(null);
+  const [message, setMessage] = useState({message: '', error: false})
+  const { toast } = useToast();
 
   const handleSearch = async () => {
+    setLoading(true)
+    const searchQuery=inputRef.current?.value;
+  
     if (searchQuery.trim()) {
-      const results = await searchUsers(searchQuery)
+      const results = await searchUser(searchQuery)
       setSearchResults(results)
+      if(results.error){
+        toast({
+          variant: "destructive",
+          title: "Uh oh! Something went wrong.",
+          description: results.message || "There was a problem with your request."
+        })
+      }
     }
+    setLoading(false)
   }
 
   const handleSelectUser = (user: User) => {
     setSelectedUser(user)
-    setSearchResults([])
-    setSearchQuery('')
+    setSearchResults({result: [], error: false, message: ''})  
   }
 
   const handleSendMoney = async () => {
+    setLoading(true);
+    const amount=amountRef.current?.value;
     if (selectedUser && amount) {
-      const result = await sendMoney(selectedUser.id, parseFloat(amount))
-      setMessage(result.message)
+      const result = await sendMoney(selectedUser.id, Number(amount))
       setSelectedUser(null)
-      setAmount('')
+      if(result.error){
+        toast({
+          variant: "destructive",
+          title: "Uh oh! Something went wrong.",
+          description: result.message || "There was a problem with your request."
+        })
+      }
+      else{
+        toast({
+          variant: "success",
+          title: "Success",
+          description:result.message  ||"Money sent successfully"
+        })
+      } 
     }
+    inputRef.current.value="";
+    setLoading(false);
   }
 
   return (
@@ -71,28 +97,32 @@ export default function Transfer() {
           <div className="space-y-4">
             <div className="flex space-x-2">
               <Input
+                ref={inputRef}
                 type="text"
                 placeholder="Search users..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
               />
-              <Button onClick={handleSearch}>
-                <Search className="h-4 w-4" />
+              <Button onClick={handleSearch} disabled={loading}>
+                {loading? (<Loader2 className="h-4 w-4 animate-spin" />): (<Search className="h-4 w-4" />)}
               </Button>
             </div>
             
-            {searchResults.length > 0 && (
+            {searchResults.result.length > 0 && (
               <Card>
                 <CardContent className="p-2">
-                  {searchResults.map(user => (
+                  {searchResults.result.map(user => (
                     <div
                       key={user.id}
-                      className="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
+                      className="flex items-center space-x-2 p-2 hover:bg-gray-800 cursor-pointer"
                       onClick={() => handleSelectUser(user)}
                     >
-                      <Avatar>
-                        <AvatarFallback>{user.name[0]}</AvatarFallback>
-                      </Avatar>
+                        {user.image ? (
+                          <Image src={user.image} alt="User Image" className="relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full" width={50}  height={50}/>
+                        ):(
+                          <Avatar>
+                            <AvatarFallback>{user?.name? user?.name[0]:"U"}</AvatarFallback>
+                          </Avatar>
+                        )}
+                        
                       <div>
                         <div className="font-medium">{user.name}</div>
                         <div className="text-sm text-gray-500">{user.email}</div>
@@ -107,9 +137,13 @@ export default function Transfer() {
               <Card>
                 <CardContent className="p-4">
                   <div className="flex items-center space-x-2 mb-4">
-                    <Avatar>
-                      <AvatarFallback>{selectedUser.name[0]}</AvatarFallback>
-                    </Avatar>
+                  {selectedUser.image ? (
+                          <Image src={selectedUser.image} alt="User Image" className="relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full" width={50}  height={50}/>
+                        ):(
+                          <Avatar>
+                            <AvatarFallback>{selectedUser?.name? selectedUser?.name[0]:"U"}</AvatarFallback>
+                          </Avatar>
+                        )}
                     <div>
                       <div className="font-medium">{selectedUser.name}</div>
                       <div className="text-sm text-gray-500">{selectedUser.email}</div>
@@ -118,20 +152,16 @@ export default function Transfer() {
                   <Input
                     type="number"
                     placeholder="Enter amount"
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
+                    ref={amountRef}
                     className="mb-4"
                   />
-                  <Button onClick={handleSendMoney} className="w-full">
-                    Send Money
+                  <Button onClick={handleSendMoney} className="w-full" disabled={loading}>
+                    {loading? (<Loader2 className="h-4 w-4 animate-spin" />): 'Send Money'}
                   </Button>
                 </CardContent>
               </Card>
             )}
             
-            {message && (
-              <div className="text-green-600 text-center">{message}</div>
-            )}
           </div>
         </CardContent>
       </Card>

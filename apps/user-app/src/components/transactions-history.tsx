@@ -1,62 +1,96 @@
-// import React from "react";
-import { ChevronRight } from "lucide-react";
-import Link from "next/link";
+"use server";
+import Image from "next/image";
+import { getTransactionHistory } from "../app/api/actions/getTransactionHistory";
+import ViewAll from "./viewAll";
+
+
+interface Ttransaction {
+  id: number;
+  userId: string;
+  type: string;
+  amount: number;
+  timestamp: Date;
+  status: string;
+  toUserName: string;
+  toUserImage: string | null;
+}
+
 
 interface Props {
   children?: React.ReactNode;
   title: string;
   viewAll?: boolean;
+  size?: number;
 }
 
-const transactions = [
+const Dtransactions = [
   {
     id: 1,
-    name: "Spotify",
-    amount: -15.0,
+    toUserName: "Spotify",
+    amount: 15.0,
     status: "Processing",
-    date: "Wed 1:00pm",
-    category: "Subscriptions",
-    icon: "🎵",
+    timestamp: "Wed 1:00pm",
+    type: "Subscriptions",
+    toUserImage: "🎵",
   },
   {
     id: 2,
-    name: "Alexa Doe",
+    toUserName: "Alexa Doe",
     amount: 88.0,
     status: "Success",
-    date: "Wed 2:45am",
-    category: "Deposit",
-    icon: "👤",
+    timestamp: "Wed 2:45am",
+    type: "Deposit",
+    toUserImage: "👤",
   },
   {
     id: 3,
-    name: "Figma",
-    amount: -18.99,
+    toUserName: "Figma",
+    amount: 18.99,
     status: "Processing",
-    date: "Tue 6:10pm",
-    category: "Income",
-    icon: "🎨",
+    timestamp: "Tue 6:10pm",
+    type: "Income",
+    toUserImage: "🎨",
   },
   {
     id: 4,
-    name: "Fresh F&V",
-    amount: -88.0,
+    toUserName: "Fresh F&V",
+    amount: 88.0,
     status: "Success",
-    date: "Tue 12:15pm",
-    category: "Groceries",
-    icon: "FV",
+    timestamp: "Tue 12:15pm",
+    type: "Groceries",
+    toUserImage: "FV",
   },
   {
     id: 5,
-    name: "Sam Sulek",
-    amount: -40.2,
+    toUserName: "Sam Sulek",
+    amount: 40.2,
     status: "Declined",
-    date: "Tue 5:40am",
-    category: "Food",
-    icon: "👤",
+    timestamp: "Tue 5:40am",
+    type: "Food",
+    toUserImage: "👤",
   },
 ];
 
-const Transactions = ({ children, title,viewAll=false }: Props) => {
+const Transactions =async ({ children, title,viewAll=false ,size}: Props) => {
+  const {transactions,error,message} = await getTransactionHistory();
+  // console.log(message);
+
+  function formatDate(dateString:Date) {
+    const date = new Date(dateString);
+    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const day = dayNames[date.getDay()];
+    
+    let hours = date.getHours();
+    const minutes = date.getMinutes();
+    const ampm = hours >= 12 ? 'pm' : 'am';
+    
+    hours = hours % 12;
+    hours = hours ? hours : 12; // the hour '0' should be '12'
+    
+    const formattedMinutes = minutes < 10 ? '0' + minutes : minutes;
+    
+    return `${day} ${hours}:${formattedMinutes}${ampm}`;
+  }
   return (
     <div className="p-6 rounded-lg shadow-sm">
       <div className="flex justify-between items-center mb-4">
@@ -64,7 +98,63 @@ const Transactions = ({ children, title,viewAll=false }: Props) => {
         {viewAll?<ViewAll />:""}
       </div>
       <div className="space-y-4">
-        {transactions.map((transaction) => (
+        {
+          transactions.length>0?
+          (transactions.map((transaction) => (
+            <div
+              key={transaction.id}
+              className="flex items-center justify-between"
+            >
+              <div className="flex items-center">
+                
+              {transaction.toUserImage != null ?
+              (
+                <Image src={transaction.toUserImage} alt="User Image" className="relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full" width={50}  height={50}/>
+              )
+                :(<div
+                  className={`w-10 h-10 rounded-full flex items-center justify-center text-white bg-gray-200 `}
+                >
+                  "🏦"
+                </div>)}
+                <div className="ml-3">
+                  <p className="font-medium">{transaction.toUserName}</p>
+                  <p className="text-xs text-gray-500">{formatDate(transaction.timestamp)}</p>
+                </div>
+              </div>
+              <div className="text-right">
+                <p
+                  className={`font-medium ${transaction.type === "Deposit" ? "text-green-600" : "text-red-600"}`}
+                >
+                  {transaction.type === "Deposit" ? "+$" : "-$"}
+                  {transaction.amount.toFixed(2)}
+                </p>
+                <div className="flex items-center mt-1">
+                  <span
+                    className={`w-2 h-2 rounded-full mr-1 ${
+                      transaction.status === "Success"
+                        ? "bg-green-500"
+                        : transaction.status === "Processing"
+                          ? "bg-blue-500"
+                          : "bg-red-500"
+                    }`}
+                  ></span>
+                  <span className="text-xs text-gray-500">
+                    {transaction.status}
+                  </span>
+                  <span
+                    className={`ml-2 text-xs px-2 py-0.5 rounded-full ${
+                      transaction.type === "Deposit"
+                          ? "bg-green-100 text-green-800"
+                          : "bg-red-100 text-red-800"
+                    }`}
+                  >
+                    {transaction.type}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )))
+        :(Dtransactions.map((transaction) => (
           <div
             key={transaction.id}
             className="flex items-center justify-between"
@@ -72,20 +162,20 @@ const Transactions = ({ children, title,viewAll=false }: Props) => {
             <div className="flex items-center">
               <div
                 className={`w-10 h-10 rounded-full flex items-center justify-center text-white ${
-                  transaction.icon === "🎵"
+                  transaction.toUserImage === "🎵"
                     ? "bg-green-500"
-                    : transaction.icon === "👤"
+                    : transaction.toUserImage === "👤"
                       ? "bg-gray-400"
-                      : transaction.icon === "🎨"
+                      : transaction.toUserImage === "🎨"
                         ? "bg-purple-500"
                         : "bg-gray-200 text-gray-700"
                 }`}
               >
-                {transaction.icon}
+                {transaction.toUserImage}
               </div>
               <div className="ml-3">
-                <p className="font-medium">{transaction.name}</p>
-                <p className="text-xs text-gray-500">{transaction.date}</p>
+                <p className="font-medium">{transaction.toUserName}</p>
+                <p className="text-xs text-gray-500">{transaction.timestamp}</p>
               </div>
             </div>
             <div className="text-right">
@@ -110,35 +200,29 @@ const Transactions = ({ children, title,viewAll=false }: Props) => {
                 </span>
                 <span
                   className={`ml-2 text-xs px-2 py-0.5 rounded-full ${
-                    transaction.category === "Subscriptions"
+                    transaction.type === "Subscriptions"
                       ? "bg-blue-100 text-blue-800"
-                      : transaction.category === "Deposit"
+                      : transaction.type === "Deposit"
                         ? "bg-green-100 text-green-800"
-                        : transaction.category === "Income"
+                        : transaction.type === "Income"
                           ? "bg-green-100 text-green-800"
-                          : transaction.category === "Groceries"
+                          : transaction.type === "Groceries"
                             ? "bg-blue-100 text-blue-800"
                             : "bg-red-100 text-red-800"
                   }`}
                 >
-                  {transaction.category}
+                  {transaction.type}
                 </span>
               </div>
             </div>
           </div>
-        ))}
+        )))
+        }
       </div>
     </div>
   );
 };
 
-const ViewAll = () => {
-  return (
-    <Link href={"/transactions"} className="text-blue-600 text-sm font-medium flex items-center">
-      View all
-      <ChevronRight className="w-4 h-4 ml-1" />
-    </Link>
-  );
-};
+
 
 export default Transactions;
